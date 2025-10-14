@@ -1,0 +1,55 @@
+{% extends 'posts/base.html' %}
+{% load static %}
+
+{% block title %}Удаление объявления - Доска объявлений{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h3 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Подтверждение удаления
+                </h3>
+            </div>
+            
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-warning me-2"></i>
+                    <strong>Внимание!</strong> Это действие нельзя отменить.
+                </div>
+                
+                <p>Вы действительно хотите удалить объявление:</p>
+                
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ post.title }}</h5>
+                        <p class="card-text text-muted">{{ post.content|truncatewords:20 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-secondary">{{ post.category.name }}</span>
+                            {% if post.price %}
+                                <span class="text-success fw-bold">{{ post.price }} ₽</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Вместе с объявлением будут удалены все связанные комментарии.
+                </p>
+                
+                <form method="post" class="d-flex justify-content-between">
+                    {% csrf_token %}
+                    <a href="{% url 'post_detail' post.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Отмена
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Да, удалить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

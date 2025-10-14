@@ -1,0 +1,179 @@
+{% extends 'posts/base.html' %}
+{% load static %}
+
+{% block title %}Мои объявления - Доска объявлений{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-user me-2"></i>Мои объявления</h2>
+    <a href="{% url 'post_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Добавить объявление
+    </a>
+</div>
+
+{% if page_obj %}
+    <div class="row">
+        {% for post in page_obj %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    {% if post.image %}
+                        <img src="{{ post.image.url }}" class="card-img-top" alt="{{ post.title }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="fas fa-image fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ post.title }}</h5>
+                        <p class="card-text text-muted">{{ post.content|truncatewords:15 }}</p>
+                        
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-{% if post.status == 'published' %}success{% elif post.status == 'draft' %}warning{% else %}secondary{% endif %}">
+                                    {{ post.get_status_display }}
+                                </span>
+                                {% if post.price %}
+                                    <span class="text-success fw-bold">{{ post.price }} ₽</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-flex justify-content-between text-muted small mb-2">
+                                <span><i class="fas fa-tag me-1"></i>{{ post.category.name }}</span>
+                                <span><i class="fas fa-calendar me-1"></i>{{ post.created_at|date:"d.m.Y" }}</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-eye me-1"></i>{{ post.views_count }} просмотров
+                                </small>
+                                <small class="text-muted">
+                                    <i class="fas fa-comments me-1"></i>{{ post.comments.count }} комментариев
+                                </small>
+                            </div>
+                            
+                            <div class="btn-group w-100" role="group">
+                                <a href="{% url 'post_detail' post.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>Просмотр
+                                </a>
+                                <a href="{% url 'post_edit' post.pk %}" class="btn btn-outline-warning btn-sm">
+                                    <i class="fas fa-edit me-1"></i>Редактировать
+                                </a>
+                                <a href="{% url 'post_delete' post.pk %}" class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash me-1"></i>Удалить
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Пагинация -->
+    {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">Первая</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">У вас пока нет объявлений</h4>
+        <p class="text-muted">Создайте свое первое объявление и начните продавать или покупать!</p>
+        <a href="{% url 'post_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Создать объявление
+        </a>
+    </div>
+{% endif %}
+
+<!-- Статистика -->
+{% if page_obj %}
+    <div class="row mt-5">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-list fa-2x text-primary mb-2"></i>
+                    <h5 class="card-title">{{ page_obj.paginator.count }}</h5>
+                    <p class="card-text text-muted">Всего объявлений</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-eye fa-2x text-info mb-2"></i>
+                    <h5 class="card-title">
+                        {% for post in page_obj %}
+                            {% if forloop.first %}{{ post.views_count }}{% endif %}
+                        {% empty %}
+                            0
+                        {% endfor %}
+                    </h5>
+                    <p class="card-text text-muted">Просмотров</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-comments fa-2x text-success mb-2"></i>
+                    <h5 class="card-title">
+                        {% for post in page_obj %}
+                            {% if forloop.first %}{{ post.comments.count }}{% endif %}
+                        {% empty %}
+                            0
+                        {% endfor %}
+                    </h5>
+                    <p class="card-text text-muted">Комментариев</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-2x text-warning mb-2"></i>
+                    <h5 class="card-title">
+                        {% for post in page_obj %}
+                            {% if post.status == 'published' %}{{ forloop.counter0|add:1 }}{% endif %}
+                        {% empty %}
+                            0
+                        {% endfor %}
+                    </h5>
+                    <p class="card-text text-muted">Опубликовано</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

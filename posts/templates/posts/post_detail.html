@@ -1,0 +1,196 @@
+{% extends 'posts/base.html' %}
+{% load static %}
+
+{% block title %}{{ post.title }} - Доска объявлений{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Объявление -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">{{ post.title }}</h2>
+                {% if user == post.author %}
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'post_edit' post.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-edit me-1"></i>Редактировать
+                        </a>
+                        <a href="{% url 'post_delete' post.pk %}" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-trash me-1"></i>Удалить
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="card-body">
+                {% if post.image %}
+                    <div class="text-center mb-4">
+                        <img src="{{ post.image.url }}" class="img-fluid rounded" alt="{{ post.title }}" style="max-height: 400px;">
+                    </div>
+                {% endif %}
+                
+                <div class="mb-4">
+                    <h5>Описание:</h5>
+                    <p class="lead">{{ post.content|linebreaks }}</p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-tag me-2"></i>Категория:</h6>
+                        <span class="badge bg-secondary fs-6">{{ post.category.name }}</span>
+                    </div>
+                    {% if post.price %}
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-ruble-sign me-2"></i>Цена:</h6>
+                            <span class="text-success fs-4 fw-bold">{{ post.price }} ₽</span>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user me-2"></i>Автор:</h6>
+                        <p class="mb-0">{{ post.author.get_full_name|default:post.author.username }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-calendar me-2"></i>Дата публикации:</h6>
+                        <p class="mb-0">{{ post.created_at|date:"d.m.Y в H:i" }}</p>
+                    </div>
+                </div>
+                
+                {% if post.contact_phone or post.contact_email %}
+                    <hr>
+                    <h6><i class="fas fa-phone me-2"></i>Контакты:</h6>
+                    <div class="row">
+                        {% if post.contact_phone %}
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Телефон:</strong> {{ post.contact_phone }}</p>
+                            </div>
+                        {% endif %}
+                        {% if post.contact_email %}
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Email:</strong> 
+                                    <a href="mailto:{{ post.contact_email }}">{{ post.contact_email }}</a>
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-eye me-1"></i>Просмотров: {{ post.views_count }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Комментарии -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-comments me-2"></i>Комментарии ({{ comments.count }})
+                </h5>
+            </div>
+            
+            <div class="card-body">
+                {% if user.is_authenticated %}
+                    <!-- Форма добавления комментария -->
+                    <form method="post" class="mb-4">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ comment_form.content.id_for_label }}" class="form-label">Добавить комментарий:</label>
+                            {{ comment_form.content }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i>Отправить
+                        </button>
+                    </form>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <a href="{% url 'login' %}">Войдите в систему</a>, чтобы оставить комментарий.
+                    </div>
+                {% endif %}
+                
+                <!-- Список комментариев -->
+                {% if comments %}
+                    <div class="comments">
+                        {% for comment in comments %}
+                            <div class="comment mb-3 p-3 border rounded">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-user me-1"></i>{{ comment.author.get_full_name|default:comment.author.username }}
+                                    </h6>
+                                    <small class="text-muted">{{ comment.created_at|date:"d.m.Y в H:i" }}</small>
+                                </div>
+                                <p class="mb-0">{{ comment.content|linebreaks }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-3 text-muted">
+                        <i class="fas fa-comment-slash fa-2x mb-2"></i>
+                        <p>Комментариев пока нет. Станьте первым!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Действия -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Действия</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'post_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-1"></i>К списку объявлений
+                    </a>
+                    {% if user.is_authenticated and user != post.author %}
+                        <button class="btn btn-outline-success" onclick="alert('Функция в разработке')">
+                            <i class="fas fa-heart me-1"></i>В избранное
+                        </button>
+                        <button class="btn btn-outline-info" onclick="alert('Функция в разработке')">
+                            <i class="fas fa-share me-1"></i>Поделиться
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Информация об авторе -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-user me-2"></i>Об авторе</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-user-circle fa-4x text-muted"></i>
+                    </div>
+                    <h6>{{ post.author.get_full_name|default:post.author.username }}</h6>
+                    <p class="text-muted small">Участник с {{ post.author.date_joined|date:"d.m.Y" }}</p>
+                    <a href="{% url 'post_list' %}?author={{ post.author.id }}" class="btn btn-outline-primary btn-sm">
+                        Все объявления автора
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Похожие объявления -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-thumbs-up me-2"></i>Похожие объявления</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Функция в разработке</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
